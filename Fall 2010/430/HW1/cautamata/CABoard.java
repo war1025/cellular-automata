@@ -62,7 +62,6 @@ public class CABoard {
 					}
 				}
 			}
-			System.out.println("Checked : " + (board.length * board.length));
 		} else {
 			Set<Point> points = nextRound(changed);
 			for(Point p : points) {
@@ -71,7 +70,6 @@ public class CABoard {
 					changes.put(p, val);
 				}
 			}
-			System.out.println("Checked : " + points.size());
 		}
 		changed = changes.keySet();
 		for(Point p : changed) {

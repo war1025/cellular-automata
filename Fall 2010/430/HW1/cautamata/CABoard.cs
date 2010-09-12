@@ -42,7 +42,6 @@ namespace CAutamata {
 			if(changed != null) {
 				changed = new HashSet<Point>(changed);
 				foreach(Point p in changes.Keys) {
-					System.Console.WriteLine("Adding Point: " + p.x + " " + p.y);
 					changed.Add(p);
 				}
 			}
@@ -52,7 +51,7 @@ namespace CAutamata {
 		}
 
 		public IDictionary<Point, uint> step() {
-			IDictionary<Point, uint> changes = new Dictionary<Point, uint>();
+			IDictionary<Point, uint> changes = new Dictionary<Point, uint>();;
 			if(changed == null) {
 				int i = 0;
 				int j = 0;
@@ -68,16 +67,14 @@ namespace CAutamata {
 						i++;
 					}
 				}
-				System.Console.WriteLine("Points Checked: " + (length*length));
 			} else {
 				HashSet<Point> points = nextRound(changed);
-				foreach (Point p in points) {
+				foreach(Point p in points) {
 					uint val = nextState(p.x,p.y);
 					if(val != board[p.x, p.y]) {
 						changes[p] = val;
 					}
 				}
-				System.Console.WriteLine("Points Checked: " + points.Count);
 			}
 			changed = changes.Keys;
 			foreach (Point p in changed) {
