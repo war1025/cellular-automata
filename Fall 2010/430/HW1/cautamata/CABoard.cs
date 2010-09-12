@@ -15,7 +15,7 @@ namespace CAutamata {
 
 		private Point[] invNeighborhood;
 
-		public CABoard(uint size, uint numStates, uint defaultState) {
+		public CABoard(uint size, uint defaultState) {
 
 			board = new uint[size,size];
 

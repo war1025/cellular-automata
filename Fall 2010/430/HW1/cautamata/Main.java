@@ -9,15 +9,24 @@ import java.util.Scanner;
 public class Main {
 
 	public static void main(String[] args) {
-		CABoard board = new CABoard(40, 10, 0);
-		board.setCASettings(new Ant());
+		CABoard board = new CABoard(20, 0);
+		board.setCASettings(new WireWorld());
 
-		int[][] bd = new int[40][40];
+		int[][] bd = new int[20][20];
 		Map<Point, Integer> glider = new HashMap<Point, Integer>();
-		glider.put(new Point(1,0),1);
+		for(int i = 0; i < 20; i++) {
+			glider.put(new Point(i,4), 3);
+		}
+		glider.put(new Point(15,3), 3);
+		glider.put(new Point(16,3), 3);
+		glider.put(new Point(15,5), 3);
+		glider.put(new Point(16,5), 3);
+		glider.put(new Point(15,4), 0);
+		glider.put(new Point(0,4), 1);
+		glider.put(new Point(1,4), 2);
 
 		for(Point p : glider.keySet()) {
-			bd[p.x][p.y] = 1;
+			bd[p.x][p.y] = glider.get(p);
 		}
 
 		board.userChanged(glider);
@@ -31,11 +40,7 @@ public class Main {
 				break;
 			}
 			int steps = 1;
-			try {
-				steps = Integer.parseInt(next);
-			} catch(Exception e) {
-				e.printStackTrace();
-			}
+
 
 			Map<Point, Integer> changes = null;
 

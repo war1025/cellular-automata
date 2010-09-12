@@ -7,46 +7,34 @@ namespace CAutamata {
 	public class Simulation {
 
 		public static void Main(string[] args) {
-			CABoard board = new CABoard(45, 2, 0);
-			board.setCASettings(new Life());
+			CABoard board = new CABoard(20, 0);
+			board.setCASettings(new WireWorld());
 
-			uint[,] bd = new uint[45,45];
+			uint[,] bd = new uint[20,20];
 			IDictionary<Point, uint> glider = new Dictionary<Point, uint>();
-			glider[new Point(1,0)] = 1;
-			glider[new Point(0,2)] = 1;
-			glider[new Point(1,2)] = 1;
-			glider[new Point(3,1)] = 1;
-			glider[new Point(4,2)] = 1;
-			glider[new Point(5,2)] = 1;
-			glider[new Point(6,2)] = 1;
+			for(int i = 0; i < 20; i++) {
+				glider[new Point(i,4)] = 3;
+			}
+			glider[new Point(15,3)] = 3;
+			glider[new Point(16,3)] = 3;
+			glider[new Point(15,5)] = 3;
+			glider[new Point(16,5)] = 3;
+			glider[new Point(15,4)] = 0;
+			glider[new Point(0,4)] = 1;
+			glider[new Point(1,4)] = 2;
 
 			foreach(Point p in glider.Keys) {
-				bd[p.x, p.y] = 1;
+				bd[p.x, p.y] = glider[p];
 			}
 
 			board.userChanged(glider);
 
-			//printBoard(bd);
-			int numSteps = 0;
-			for(int i = 0; i < 172; i++) {
-				IDictionary<Point, uint> changes = board.step();
-				foreach (Point p in changes.Keys) {
-					bd[p.x, p.y] = changes[p];
-				}
-			}
-			Console.WriteLine("Step: " + 172);
 			printBoard(bd);
-			/*while(true) {
+			int numSteps = 0;
+			while(true) {
 				string next = Console.ReadLine();
 				if(next == "q") {
 					break;
-				} else if(next == "g") {
-					foreach (Point p in glider.Keys) {
-						bd[p.x, p.y] = 1;
-					}
-					board.userChanged(glider);
-					printBoard(bd);
-					continue;
 				}
 				numSteps++;
 				IDictionary<Point, uint> changes = board.step();
@@ -58,7 +46,7 @@ namespace CAutamata {
 				Console.WriteLine("Step : " + numSteps);
 				Console.WriteLine("NumChanges : " + changes.Count);
 				printBoard(bd);
-			}*/
+			}
 		}
 
 		private static void printBoard(uint[,] board) {

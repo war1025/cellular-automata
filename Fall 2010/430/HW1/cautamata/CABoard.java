@@ -19,7 +19,7 @@ public class CABoard {
 
 	private Point[] invNeighborhood;
 
-	public CABoard(int size, int numStates, int defaultState) {
+	public CABoard(int size, int defaultState) {
 
 		board = new int[size][size];
 
