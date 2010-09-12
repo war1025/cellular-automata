@@ -6,7 +6,7 @@ namespace CAutamata {
 
 	public class CABoard {
 
-		private uint[,] board;
+		private uint[][] board;
 		private uint numStates;
 
 		private ICollection<Point> changed;
@@ -17,13 +17,14 @@ namespace CAutamata {
 
 		public CABoard(uint size, uint defaultState) {
 
-			board = new uint[size,size];
-
+			board = new uint[size][];
 			for(int i = 0; i < size; i++) {
+				board[i] = new uint[size];
 				for(int j = 0; j < size; j++) {
-					board[i,j] = defaultState;
+					board[i][j] = defaultState;
 				}
 			}
+
 		}
 
 		public void setCASettings(ICASettings caSettings) {
@@ -46,39 +47,33 @@ namespace CAutamata {
 				}
 			}
 			foreach (Point p in changes.Keys) {
-				board[p.x, p.y] = changes[p];
+				board[p.x][p.y] = changes[p];
 			}
 		}
 
 		public IDictionary<Point, uint> step() {
 			IDictionary<Point, uint> changes = new Dictionary<Point, uint>();;
 			if(changed == null) {
-				int i = 0;
-				int j = 0;
-				int length = board.GetLength(0);
-				for(int k = 0; k < board.Length; k++) {
-					uint val = nextState(i,j);
-					if(val != board[i,j]) {
-						changes[new Point(i,j)] = val;
-					}
-					j++;
-					if(j == length) {
-						j = 0;
-						i++;
+				for(int i = 0; i < board.Length; i++) {
+					for(int j = 0; j < board[i].Length; j++) {
+						uint val = nextState(i,j);
+						if(val != board[i][j]) {
+							changes[new Point(i,j)] = val;
+						}
 					}
 				}
 			} else {
 				HashSet<Point> points = nextRound(changed);
 				foreach(Point p in points) {
 					uint val = nextState(p.x,p.y);
-					if(val != board[p.x, p.y]) {
+					if(val != board[p.x][p.y]) {
 						changes[p] = val;
 					}
 				}
 			}
 			changed = changes.Keys;
 			foreach (Point p in changed) {
-				board[p.x, p.y] = changes[p];
+				board[p.x][p.y] = changes[p];
 			}
 			return changes;
 		}
@@ -100,7 +95,7 @@ namespace CAutamata {
 				Point p = new Point(neighborhood[i]);
 				p.x = sanitized(p.x + x);
 				p.y = sanitized(p.y + y);
-				nVals[i] = board[p.x, p.y];
+				nVals[i] = board[p.x][p.y];
 			}
 			return caSettings.nextState(nVals);
 		}
