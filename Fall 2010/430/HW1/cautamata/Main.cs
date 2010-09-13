@@ -7,12 +7,13 @@ namespace CAutamata {
 	public class Simulation {
 
 		public static void Main(string[] args) {
-			CABoard board = new CABoard(40, 0);
+			uint size = 500;
+			CABoard board = new CABoard(size, 0);
 			board.setCASettings(new Life());
 
-			uint[][] bd = new uint[40][];
+			uint[][] bd = new uint[size][];
 			for(int i = 0; i < bd.Length; i++) {
-				bd[i] = new uint[40];
+				bd[i] = new uint[size];
 			}
 			IDictionary<Point, uint> glider = new Dictionary<Point, uint>();
 			glider[new Point(1,0)] = 1;
@@ -29,10 +30,10 @@ namespace CAutamata {
 
 			board.userChanged(glider);
 
-			printBoard(bd);
+			//printBoard(bd);
 			int numSteps = 0;
 			int maxChanges = 0;
-			while(true) {
+			/*while(true) {
 				string next = Console.ReadLine();
 				if(next == "q") {
 					break;
@@ -42,7 +43,8 @@ namespace CAutamata {
 					}
 					board.userChanged(glider);
 					continue;
-				}
+				}*/
+			for(int i = 0; i < 10000; i++) {
 				numSteps++;
 				IDictionary<Point, uint> changes = board.step();
 				if(changes.Count > maxChanges) {
@@ -53,9 +55,9 @@ namespace CAutamata {
 					bd[p.x][p.y] = changes[p];
 				}
 
-				Console.WriteLine("Step : " + numSteps);
-				Console.WriteLine("NumChanges : " + changes.Count);
-				printBoard(bd);
+				//Console.WriteLine("Step : " + numSteps);
+				//Console.WriteLine("NumChanges : " + changes.Count);
+				//printBoard(bd);
 			}
 			Console.WriteLine("Max changes in a round: " + maxChanges);
 		}
