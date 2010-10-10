@@ -1,5 +1,6 @@
 
 
+using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
 using System.IO;
@@ -83,7 +84,14 @@ namespace CAClient {
 				if(curLine.StartsWith("DefaultState")) {
 					defaultState = UInt32.Parse(curLine.Split(new char[] {':'})[1]);
 				} else if(curLine.StartsWith("(")) {
+					string[] parts = curLine.Split(new char[] {':'});
+					string[] point = parts[0].Split(new char[] {'(',',',')'});
+					points[new Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
+				}
+			}
 
+			return new CAState(defaultState, points);
+		}
 
 		private string parseBrackets(string first, StreamReader reader) {
 			if(!first.Contains("{")) {
