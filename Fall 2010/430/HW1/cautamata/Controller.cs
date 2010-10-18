@@ -58,7 +58,7 @@ namespace CAServer {
 
 		public bool start() {
 			if(state == State.Stopped) {
-				state = Running;
+				state = State.Running;
 				var s = new StateEvent(state);
 				lock(queueLock) {
 					queue.Enqueue(s);
@@ -122,7 +122,18 @@ namespace CAServer {
 		}
 
 		public bool shutdown() {
-
+			if(state == State.Stopped) {
+				state = State.UnInited;
+				var s = new StateEvent(state);
+				lock(queueLock) {
+					queue.Enqueue(s);
+					Monitor.PulseAll(queueLock);
+				}
+				s.Wait();
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 		private enum State {
