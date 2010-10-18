@@ -19,7 +19,7 @@ namespace CAServer {
 
 		public Controller() {
 			this.accumulated = new Dictionary<Point, uint>();
-			this.state = UnInited;
+			this.state = State.UnInited;
 			this.queue = new Queue<StateEvent>();
 
 			this.accumulatorLock = new object();
@@ -29,7 +29,7 @@ namespace CAServer {
 		}
 
 		public bool init(string code, uint defaultState) {
-			if(state == UnInited) {
+			if(state == State.UnInited) {
 				caSettings = CACompiler.compile(code);
 				if(caSettings != null) {
 					return reinit(defaultState);
@@ -42,11 +42,11 @@ namespace CAServer {
 		}
 
 		public bool reinit(uint defaultState) {
-			if(state == UnInited) {
+			if(state == State.UnInited) {
 				if(caSettings != null) {
 					board = new CABoard(500, defaultState);
 					board.setCASettings(caSettings);
-					state = Stopped;
+					state = State.Stopped;
 					return true;
 				} else {
 					return false;
@@ -57,7 +57,7 @@ namespace CAServer {
 		}
 
 		public bool start() {
-			if(state == Stopped) {
+			if(state == State.Stopped) {
 				state = Running;
 				var s = new StateEvent(state);
 				lock(queueLock) {
@@ -66,7 +66,7 @@ namespace CAServer {
 				}
 				s.Wait();
 				return true;
-			} else if(state == Running){
+			} else if(state == State.Running){
 				return true;
 			} else {
 				return false;
@@ -74,8 +74,8 @@ namespace CAServer {
 		}
 
 		public bool stop() {
-			if(state == Running) {
-				state = Stopped;
+			if(state == State.Running) {
+				state = State.Stopped;
 				var s = new StateEvent(state);
 				lock(queueLock) {
 					queue.Enqueue(s);
@@ -83,7 +83,7 @@ namespace CAServer {
 				}
 				s.Wait();
 				return true;
-			} else if(state == Stopped) {
+			} else if(state == State.Stopped) {
 				return true;
 			} else {
 				return false;
@@ -91,8 +91,8 @@ namespace CAServer {
 		}
 
 		public bool step() {
-			if(state == Stopped) {
-				var s = new StateEvent(Step);
+			if(state == State.Stopped) {
+				var s = new StateEvent(State.Step);
 				lock(queueLock) {
 					queue.Enqueue(s);
 					Monitor.PulseAll(queueLock);
@@ -113,7 +113,7 @@ namespace CAServer {
 		}
 
 		public bool pushChanges(IDictionary<Point, uint> changes) {
-			if(state == Stopped) {
+			if(state == State.Stopped) {
 				board.userChanged(changes);
 				return true;
 			} else {
@@ -163,7 +163,7 @@ namespace CAServer {
 		}
 
 		private void caRunner() {
-			State curState = UnInited;
+			State curState = State.UnInited;
 			StateEvent curEvent = null;
 			while(true) {
 				if(curEvent != null) {
@@ -171,7 +171,7 @@ namespace CAServer {
 					curEvent = null;
 				}
 				lock(queueLock) {
-					while((curState != Running) && (queue.Count == 0)) {
+					while((curState != State.Running) && (queue.Count == 0)) {
 						Monitor.Wait(queueLock);
 					}
 					if(queue.Count > 0) {
