@@ -11,18 +11,25 @@ namespace CAServer {
 
 	public class CACompiler {
 
-		public static ICASettings compile(string name, string code) {
+		public static ICASettings compile(string code) {
 			var csCompiler = new CSharpCodeProvider();
 			var s = new string[] {code};
-			var compilerParams = new CompilerParameters();
+			var compilerParams = new CompilerParameters(new string[] {"ICASettings.exe"});
 			compilerParams.GenerateExecutable = false;
 			compilerParams.GenerateInMemory = true;
 			var results = csCompiler.CompileAssemblyFromSource(compilerParams, s);
 			if(results.Errors.HasErrors) {
-				return null;
+				foreach( CompilerError e in results.Errors) {
+					Console.WriteLine(e.ErrorText);
+				}
 			}
 			var assembly = results.CompiledAssembly;
-			return assembly.CreateInstance(name) as ICASettings;
+			foreach( Type t in assembly.GetTypes()) {
+				if(typeof(ICASettings).IsAssignableFrom(t)) {
+					return t.GetConstructor(new Type[] {}).Invoke(new object[] {}) as ICASettings;
+				}
+			}
+			return null;
 		}
 
 	}
