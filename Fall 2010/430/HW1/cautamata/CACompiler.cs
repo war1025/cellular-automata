@@ -17,7 +17,7 @@ namespace CAServer {
 			var compilerParams = new CompilerParameters();
 			compilerParams.GenerateExecutable = false;
 			compilerParams.GenerateInMemory = true;
-			var results = csCompiler.compileAssemblyFromSource(compilerParams, s);
+			var results = csCompiler.CompileAssemblyFromSource(compilerParams, s);
 			if(results.Errors.HasErrors) {
 				return null;
 			}
