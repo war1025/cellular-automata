@@ -173,6 +173,10 @@ namespace CAServer {
 
 		public bool pushChanges(Dictionary<Point, uint> changes) {
 			if(state == State.Stopped) {
+				foreach( KeyValuePair<Point, uint> kv in changes) {
+					Point p = kv.Key;
+					lastState[p.x][p.y] = kv.Value;
+				}
 				board.userChanged(changes);
 				return true;
 			} else {

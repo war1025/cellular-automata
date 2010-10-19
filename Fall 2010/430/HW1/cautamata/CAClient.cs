@@ -46,6 +46,7 @@ namespace CAClient {
 			foreach(KeyValuePair<Point, uint> kv in dict) {
 				Console.WriteLine(kv.Key + ": " + kv.Value);
 			}
+			Console.WriteLine(dict.Count);
 
 		}
 	}
