@@ -8,9 +8,9 @@ using System.ServiceModel.Channels;
 
 namespace CAClient {
 
-	public class ControllerClient : ClientBase<IController>, IController {
+	public class ClientController : ClientBase<IController>, IController {
 
-		public ControllerClient(Binding b, EndpointAddress e) : base(b,e) {
+		public ClientController(string address) : base(new BasicHttpBinding(), new EndpointAddress(address)) {
 
 		}
 
@@ -34,11 +34,11 @@ namespace CAClient {
 			return Channel.step();
 		}
 
-		public IDictionary<Point, uint> pullChanges() {
+		public Dictionary<Point, uint> pullChanges() {
 			return Channel.pullChanges();
 		}
 
-		public bool pushChanges(IDictionary<Point, uint> changes) {
+		public bool pushChanges(Dictionary<Point, uint> changes) {
 			return Channel.pushChanges(changes);
 		}
 

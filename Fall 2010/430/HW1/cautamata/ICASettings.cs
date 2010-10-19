@@ -15,6 +15,7 @@ namespace CAutamata {
 		uint nextState(uint[] neighborhood);
 	}
 
+	[System.Serializable]
 	public class Point {
 		public int x;
 		public int y;

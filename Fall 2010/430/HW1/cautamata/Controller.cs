@@ -9,7 +9,7 @@ namespace CAServer {
 
 		private ICASettings caSettings;
 		private CABoard board;
-		private IDictionary<Point, uint> accumulated;
+		private Dictionary<Point, uint> accumulated;
 
 		private Queue<StateEvent> queue;
 		private State state;
@@ -104,15 +104,15 @@ namespace CAServer {
 			}
 		}
 
-		public IDictionary<Point, uint> pullChanges() {
+		public Dictionary<Point, uint> pullChanges() {
 			lock(accumulatorLock) {
-				IDictionary<Point, uint> ret = accumulated;
+				Dictionary<Point, uint> ret = accumulated;
 				accumulated = new Dictionary<Point, uint>();
 				return ret;
 			}
 		}
 
-		public bool pushChanges(IDictionary<Point, uint> changes) {
+		public bool pushChanges(Dictionary<Point, uint> changes) {
 			if(state == State.Stopped) {
 				board.userChanged(changes);
 				return true;

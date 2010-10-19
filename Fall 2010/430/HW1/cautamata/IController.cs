@@ -25,10 +25,10 @@ namespace CAServer {
 		bool step();
 
 		[OperationContract]
-		IDictionary<Point, uint> pullChanges();
+		Dictionary<Point, uint> pullChanges();
 
 		[OperationContract]
-		bool pushChanges(IDictionary<Point, uint> changes);
+		bool pushChanges(Dictionary<Point, uint> changes);
 
 		[OperationContract]
 		bool shutdown();
