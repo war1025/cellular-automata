@@ -10,7 +10,7 @@ namespace CAClient {
 
 	public class ClientController : ClientBase<IController>, IController {
 
-		public ClientController(string address) : base(new NetTcpBinding(), new EndpointAddress(address)) {
+		public ClientController(string address) : base(new BasicHttpBinding(), new EndpointAddress(address)) {
 
 		}
 

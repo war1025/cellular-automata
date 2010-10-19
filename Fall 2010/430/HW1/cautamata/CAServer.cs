@@ -10,9 +10,9 @@ namespace CAServer {
 
 		public static void Main() {
 
-			var binding = new NetTcpBinding ();
+			var binding = new BasicHttpBinding ();
 			var address = new Uri ("http://localhost:8080");
-			var host = new ServiceHost (typeof(Controller));
+			var host = new ServiceHost (typeof(WrapperController));
 			host.AddServiceEndpoint (typeof (IController), binding, address);
 			host.Open ();
 			Console.WriteLine ("Type [CR] to stop...");

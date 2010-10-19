@@ -5,6 +5,45 @@ using System.Threading;
 
 namespace CAServer {
 
+	public class WrapperController : IController {
+
+		private static readonly IController controller = new Controller();
+
+		public bool init(string code, uint defaultState) {
+			return controller.init(code, defaultState);
+		}
+
+		public bool reinit(uint defaultState) {
+			return controller.reinit(defaultState);
+		}
+
+		public bool start() {
+			return controller.start();
+		}
+
+		public bool stop() {
+			return controller.stop();
+		}
+
+		public bool step() {
+			return controller.step();
+		}
+
+		public Dictionary<Point, uint> pullChanges() {
+			return controller.pullChanges();
+		}
+
+		public bool pushChanges(Dictionary<Point, uint> changes) {
+			return controller.pushChanges(changes);
+		}
+
+		public bool shutdown() {
+			return controller.shutdown();
+		}
+
+
+	}
+
 	public class Controller : IController {
 
 		private ICASettings caSettings;

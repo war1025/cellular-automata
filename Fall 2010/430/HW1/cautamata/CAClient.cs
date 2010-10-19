@@ -30,13 +30,22 @@ namespace CAClient {
 
 			Console.WriteLine("Pushing the Glider: " + ret);
 
-			ret = controller.step();
+			ret = controller.start();
 
 			Console.WriteLine("Stepping the simulation: " + ret);
 
+			Console.ReadLine();
+
+			ret = controller.stop();
+
+			Console.WriteLine("Stopping Simulation: " + ret);
+
 			IDictionary<Point, uint> dict = controller.pullChanges();
 
-			Console.WriteLine("Changes:\n" + dict);
+			Console.WriteLine("Changes:");
+			foreach(KeyValuePair<Point, uint> kv in dict) {
+				Console.WriteLine(kv.Key + ": " + kv.Value);
+			}
 
 		}
 	}
