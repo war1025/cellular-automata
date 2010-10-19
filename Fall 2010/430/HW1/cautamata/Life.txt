@@ -1,0 +1,24 @@
+
+Name : Life
+
+NumStates : 2
+
+DefaultState : 0
+
+Neighborhood : { (0,0) ; (-1,0) ; (-1,1) ;
+					(0,-1) ; (-1,-1) ; (0,1) ;
+					(1,-1) ; (1,0) ; (1,1) }
+
+Delta : {
+
+	uint sum = 0;
+	for(int i = 1; i < nb.Length; i++) {
+		sum += nb[i];
+	}
+	switch(sum) {
+		case 0 : case 1 : return 0;
+		case 2 : return nb[0];
+		case 3 : return 1;
+		default : return 0;
+	}
+}

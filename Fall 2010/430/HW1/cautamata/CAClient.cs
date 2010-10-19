@@ -13,7 +13,13 @@ namespace CAClient {
 
 			bool ret = false;
 
-			ret = controller.init(args[0], 0);
+			CAParser parser = new CAParser();
+
+			CAComponents comps = parser.parseCASettings(args[0]);
+
+			Console.WriteLine(comps.code);
+
+			ret = controller.init(comps.code, comps.defaultState);
 
 			Console.WriteLine("Initing the controller: " + ret);
 
@@ -32,21 +38,31 @@ namespace CAClient {
 
 			ret = controller.start();
 
-			Console.WriteLine("Stepping the simulation: " + ret);
+			Console.WriteLine("Starting the simulation: " + ret);
 
-			Console.ReadLine();
+			for(int i = 0; i < 10; i++) {
+				Console.ReadLine();
+				IDictionary<Point, uint> dict = controller.pullChanges();
+
+				Console.WriteLine("Changes:");
+				foreach(KeyValuePair<Point, uint> kv in dict) {
+					Console.WriteLine(kv.Key + ": " + kv.Value);
+				}
+				Console.WriteLine(dict.Count);
+			}
 
 			ret = controller.stop();
 
 			Console.WriteLine("Stopping Simulation: " + ret);
 
-			IDictionary<Point, uint> dict = controller.pullChanges();
+			IDictionary<Point, uint> dict2 = controller.pullChanges();
 
 			Console.WriteLine("Changes:");
-			foreach(KeyValuePair<Point, uint> kv in dict) {
+			foreach(KeyValuePair<Point, uint> kv in dict2) {
 				Console.WriteLine(kv.Key + ": " + kv.Value);
 			}
-			Console.WriteLine(dict.Count);
+			Console.WriteLine(dict2.Count);
+			controller.shutdown();
 
 		}
 	}
