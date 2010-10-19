@@ -49,6 +49,7 @@ namespace CAServer {
 		private ICASettings caSettings;
 		private CABoard board;
 		private Dictionary<Point, uint> accumulated;
+		private uint[][] lastState;
 
 		private Queue<StateEvent> queue;
 		private State state;
@@ -63,6 +64,11 @@ namespace CAServer {
 
 			this.accumulatorLock = new object();
 			this.queueLock = new object();
+
+			this.lastState = new uint[500][];
+			for(int i = 0; i < 500; i++) {
+				lastState[i] = new uint[500];
+			}
 
 			new Thread(caRunner).Start();
 		}
@@ -83,6 +89,11 @@ namespace CAServer {
 		public bool reinit(uint defaultState) {
 			if(state == State.UnInited) {
 				if(caSettings != null) {
+					for(int i = 0; i < 500; i++) {
+						for(int j = 0; j < 500; j++) {
+							lastState[i][j] = defaultState;
+						}
+					}
 					board = new CABoard(500, defaultState);
 					board.setCASettings(caSettings);
 					state = State.Stopped;
@@ -144,11 +155,20 @@ namespace CAServer {
 		}
 
 		public Dictionary<Point, uint> pullChanges() {
+			Dictionary<Point, uint> ret = null;
 			lock(accumulatorLock) {
-				Dictionary<Point, uint> ret = accumulated;
+				ret = accumulated;
 				accumulated = new Dictionary<Point, uint>();
-				return ret;
 			}
+			Dictionary<Point, uint> ret2 = new Dictionary<Point, uint>();
+			foreach( KeyValuePair<Point, uint> kv in ret) {
+				Point p = kv.Key;
+				if(!(lastState[p.x][p.y] == kv.Value)) {
+					ret2[p] = kv.Value;
+					lastState[p.x][p.y] = kv.Value;
+				}
+			}
+			return ret2;
 		}
 
 		public bool pushChanges(Dictionary<Point, uint> changes) {
