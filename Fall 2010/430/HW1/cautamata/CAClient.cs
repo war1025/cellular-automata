@@ -22,6 +22,11 @@ namespace CAClient {
 
 			ret = controller.init(comps.code, state.defaultState);
 
+			var board = new uint[500][];
+			for(int i = 0; i < board.Length; i++) {
+				board[i] = new uint[500];
+			}
+
 			Console.WriteLine("Initing the controller: " + ret);
 
 			ret = controller.pushChanges(state.states);
@@ -38,6 +43,8 @@ namespace CAClient {
 
 				Console.WriteLine("Changes:");
 				foreach(KeyValuePair<Point, uint> kv in dict) {
+					Point p = kv.Key;
+					board[p.x][p.y] = kv.Value;
 					Console.WriteLine(kv.Key + ": " + kv.Value);
 				}
 				Console.WriteLine(dict.Count);
@@ -55,6 +62,8 @@ namespace CAClient {
 			}
 			Console.WriteLine(dict2.Count);
 			controller.shutdown();
+
+			parser.saveCAState(args[2], board);
 
 		}
 	}

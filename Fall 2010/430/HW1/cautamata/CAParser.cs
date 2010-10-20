@@ -93,6 +93,41 @@ namespace CAClient {
 			return new CAState(defaultState, points);
 		}
 
+		public void saveCAState(string filename, uint[][] board) {
+			var count = new Dictionary<uint, uint>();
+			foreach (uint[] a in board) {
+				foreach (uint b in a) {
+					if(count.ContainsKey(b)) {
+						count[b]++;
+					} else {
+						count[b] = 0;
+					}
+				}
+			}
+			uint max = 0;
+			uint defaultState = 0;
+			foreach (var kv in count) {
+				if(kv.Value > max) {
+					max = kv.Value;
+					defaultState = kv.Key;
+				}
+			}
+
+			var writer = new StreamWriter(filename);
+
+			writer.Write("DefaultState : " + defaultState + "\n");
+
+			for(int i = 0; i < board.Length; i++) {
+				for(int j = 0; j < board[i].Length; j++) {
+					if(board[i][j] != defaultState) {
+						writer.Write("(" + i + "," + j + ") : " + board[i][j] + "\n");
+					}
+				}
+			}
+
+			writer.Close();
+		}
+
 		private string parseBrackets(string first, StreamReader reader) {
 			if(!first.Contains("{")) {
 				return null;
