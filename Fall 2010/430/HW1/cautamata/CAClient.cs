@@ -16,23 +16,15 @@ namespace CAClient {
 			CAParser parser = new CAParser();
 
 			CAComponents comps = parser.parseCASettings(args[0]);
+			CAState state = parser.parseCAState(args[1]);
 
 			Console.WriteLine(comps.code);
 
-			ret = controller.init(comps.code, comps.defaultState);
+			ret = controller.init(comps.code, state.defaultState);
 
 			Console.WriteLine("Initing the controller: " + ret);
 
-			var glider = new Dictionary<Point, uint>();
-			glider[new Point(1,0)] = 1;
-			glider[new Point(0,2)] = 1;
-			glider[new Point(1,2)] = 1;
-			glider[new Point(3,1)] = 1;
-			glider[new Point(4,2)] = 1;
-			glider[new Point(5,2)] = 1;
-			glider[new Point(6,2)] = 1;
-
-			ret = controller.pushChanges(glider);
+			ret = controller.pushChanges(state.states);
 
 			Console.WriteLine("Pushing the Glider: " + ret);
 

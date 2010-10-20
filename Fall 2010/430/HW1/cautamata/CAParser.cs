@@ -25,9 +25,9 @@ namespace CAClient {
 	public struct CAState {
 
 		public uint defaultState;
-		public IDictionary<Point, uint> states;
+		public Dictionary<CAutamata.Point, uint> states;
 
-		public CAState(uint defaultState, IDictionary<Point, uint> states) {
+		public CAState(uint defaultState, Dictionary<CAutamata.Point, uint> states) {
 			this.defaultState = defaultState;
 			this.states = states;
 		}
@@ -44,7 +44,7 @@ namespace CAClient {
 			var settings = File.OpenText(filename);
 			uint numStates = 0;
 			uint defaultState = 0;
-			Point[] neighborhood = null;
+			CAutamata.Point[] neighborhood = null;
 			Color[] colors = null;
 			string delta = null;
 			string name = null;
@@ -76,7 +76,7 @@ namespace CAClient {
 			var settings = File.OpenText(filename);
 
 			uint defaultState = 0;
-			var points = new Dictionary<Point, uint>();
+			var points = new Dictionary<CAutamata.Point, uint>();
 
 			string curLine = null;
 
@@ -86,7 +86,7 @@ namespace CAClient {
 				} else if(curLine.StartsWith("(")) {
 					string[] parts = curLine.Split(new char[] {':'});
 					string[] point = parts[0].Split(new char[] {'(',',',')'});
-					points[new Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
+					points[new CAutamata.Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
 				}
 			}
 
@@ -113,15 +113,15 @@ namespace CAClient {
 			return sb.ToString();
 		}
 
-		private Point[] parseNeighborhood(string first, StreamReader reader) {
+		private CAutamata.Point[] parseNeighborhood(string first, StreamReader reader) {
 			string neighborhood = parseBrackets(first, reader);
 			string[] points = neighborhood.Split(new char[] {';'});
-			Point[] ret = new Point[points.Length];
+			CAutamata.Point[] ret = new CAutamata.Point[points.Length];
 
 			for(int i = 0; i < points.Length; i++) {
 				string p = points[i];
 				string[] parts = p.Split(new char[] {'(',',',')'});
-				ret[i] = new Point(Int32.Parse(parts[1]), Int32.Parse(parts[2]));
+				ret[i] = new CAutamata.Point(Int32.Parse(parts[1]), Int32.Parse(parts[2]));
 			}
 
 			return ret;
@@ -144,7 +144,7 @@ namespace CAClient {
 			return parseBrackets(first, reader);
 		}
 
-		private string writeCode(string name, uint numStates, Point[] neighborhood, string delta) {
+		private string writeCode(string name, uint numStates, CAutamata.Point[] neighborhood, string delta) {
 			StringBuilder sb = new StringBuilder();
 
 			sb.AppendLine("using CAutamata;");
@@ -162,7 +162,7 @@ namespace CAClient {
 				if(i > 0) {
 					sb.Append(",");
 				}
-				sb.Append("new Point( " + neighborhood[i].X + "," + neighborhood[i].Y + ") ");
+				sb.Append("new Point( " + neighborhood[i].x + "," + neighborhood[i].y + ") ");
 			}
 			sb.AppendLine("};}}");
 

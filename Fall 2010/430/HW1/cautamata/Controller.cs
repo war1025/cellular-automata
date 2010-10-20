@@ -101,6 +101,7 @@ namespace CAServer {
 					}
 					board = new CABoard(500, defaultState);
 					board.setCASettings(caSettings);
+					accumulated.Clear();
 					state = State.Stopped;
 					return true;
 				} else {
