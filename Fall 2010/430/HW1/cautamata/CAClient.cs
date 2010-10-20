@@ -30,6 +30,10 @@ namespace CAClient {
 			Console.WriteLine("Initing the controller: " + ret);
 
 			ret = controller.pushChanges(state.states);
+			foreach(var kv in state.states) {
+				Point p = kv.Key;
+				board[p.x][p.y] = kv.Value;
+			}
 
 			Console.WriteLine("Pushing the Glider: " + ret);
 
