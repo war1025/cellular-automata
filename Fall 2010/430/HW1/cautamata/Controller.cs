@@ -70,7 +70,9 @@ namespace CAServer {
 				lastState[i] = new uint[500];
 			}
 
-			new Thread(caRunner).Start();
+			var runner = new Thread(caRunner);
+			runner.IsBackground = true;
+			runner.Start();
 		}
 
 		public bool init(string code, uint defaultState) {
@@ -93,6 +95,9 @@ namespace CAServer {
 						for(int j = 0; j < 500; j++) {
 							lastState[i][j] = defaultState;
 						}
+					}
+					if(board != null) {
+						board.closeBoard();
 					}
 					board = new CABoard(500, defaultState);
 					board.setCASettings(caSettings);

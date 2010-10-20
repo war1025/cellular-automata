@@ -7,10 +7,10 @@ namespace CAutamata {
 	public class Simulation {
 
 		public static void Main(string[] args) {
-			ICASettings settings = CAServer.CACompiler.compile(args[0]);
+			//ICASettings settings = CAServer.CACompiler.compile(args[0]);
 			uint size = 500;
 			CABoard board = new CABoard(size, 0);
-			board.setCASettings(settings);
+			board.setCASettings(new Life());
 
 			uint[][] bd = new uint[size][];
 			for(int i = 0; i < bd.Length; i++) {
