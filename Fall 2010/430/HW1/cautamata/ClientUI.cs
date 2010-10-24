@@ -30,6 +30,8 @@ namespace CAClient {
 		private Queue<CAStateEvent> queue;
 		private State curState;
 
+		private bool running;
+
 		public event CAStateUpdate caUpdated;
 		public event CAStateClear caCleared;
 		public event CAError caError;
@@ -44,6 +46,7 @@ namespace CAClient {
 
 			this.pendingChanges = new Dictionary<Point, uint>();
 			this.curState = State.UnInited;
+			this.running = true;
 
 			this.board = new uint[500][];
 			for(int i = 0; i < 500; i++) {
@@ -51,7 +54,6 @@ namespace CAClient {
 			}
 
 			var thread = new Thread(queueThread);
-			thread.IsBackground = true;
 			thread.Start();
 
 		}
@@ -200,6 +202,7 @@ namespace CAClient {
 			enqueue(() => {
 				if(curState == State.Stopped) {
 					var state = CAParser.parseCAState(filename);
+					controller.shutdown();
 					if(controller.reinit(state.defaultState)) {
 						controller.pushChanges(state.states);
 						clearUI(state.defaultState);
@@ -256,6 +259,7 @@ namespace CAClient {
 					controller.shutdown();
 				}
 				curState = State.UnInited;
+				this.running = false;
 			});
 		}
 
@@ -317,7 +321,7 @@ namespace CAClient {
 
 		private void queueThread() {
 
-			while(true) {
+			while(running) {
 				CAStateEvent ev = null;
 				lock(queueLock) {
 					while(queue.Count == 0) {

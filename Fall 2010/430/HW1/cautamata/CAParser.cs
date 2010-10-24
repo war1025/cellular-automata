@@ -47,7 +47,7 @@ namespace CAClient {
 				uint numStates = 0;
 				uint defaultState = 0;
 				CAutamata.Point[] neighborhood = null;
-				Color[] colors = null;
+				Color[] colors = new Color[0];
 				string delta = null;
 				string name = null;
 
