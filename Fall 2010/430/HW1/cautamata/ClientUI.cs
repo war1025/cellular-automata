@@ -1,5 +1,7 @@
 
 using System.Collections.Generic;
+using System.Threading;
+
 using CAutamata;
 
 
@@ -47,6 +49,10 @@ namespace CAClient {
 			for(int i = 0; i < 500; i++) {
 				board[i] = new uint[500];
 			}
+
+			var thread = new Thread(queueThread);
+			thread.IsBackground = true;
+			thread.Start();
 
 		}
 
@@ -151,7 +157,7 @@ namespace CAClient {
 						}
 						assignColors(i);
 						curState = State.Stopped;
-						clearUI(state.defaultState);
+						clearUI(comps.defaultState);
 					} else {
 						sendError(CAErrorType.CALoad, "Could not load the CA from the file");
 					}
@@ -160,6 +166,34 @@ namespace CAClient {
 				}
 			});
 		}
+
+		public void loadCA(string name, uint numStates, uint defaultState, string neighborhood, string delta) {
+
+			enqueue(() => {
+				if((curState == State.Stopped)) {
+					if(!controller.shutdown()) {
+						sendError(CAErrorType.CALoad, "Could not shut down previous CA");
+						return;
+					}
+				}
+				if((curState == State.Stopped) || (curState == State.UnInited)) {
+					var comps = CAParser.parseCASettings(name, numStates, defaultState, neighborhood, delta);
+
+					if(controller.init(comps.code, comps.defaultState)) {
+						this.numStates = comps.numStates;
+						this.colors = new System.Drawing.Color[numStates];
+						assignColors(0);
+						curState = State.Stopped;
+						clearUI(comps.defaultState);
+					} else {
+						sendError(CAErrorType.CALoad, "Could not load the described CA");
+					}
+				} else {
+					sendError(CAErrorType.CALoad, "Simulation must be stopped before a new CA can be loaded");
+				}
+			});
+		}
+
 
 		public void loadState(string filename) {
 
@@ -210,6 +244,86 @@ namespace CAClient {
 					updateUI(changes);
 				}
 			});
+		}
+
+		public void shutdown() {
+
+			enqueue(() => {
+				switch(curState) {
+					case State.Running : controller.stop();
+					case State.Stopped : controller.shutDown(); curState = State.UnInited;
+				}
+			});
+		}
+
+		private void enqueue(CAStateEvent stateEvent) {
+			lock(queueLock) {
+				queue.Enqueue(stateEvent);
+				Monitor.pulseAll(queueLock);
+			}
+		}
+
+		private void assignColors(int start) {
+			var rand = new System.Random();
+			for(int i = start; i < colors.Length; i++) {
+				colors[i] = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+			}
+		}
+
+		private void updateUI(Dictionary<Point, uint> changes) {
+			foreach(var kv in changes) {
+				Point p = kv.Key;
+				board[p.x][p.y] = kv.Value;
+			}
+			if(caUpdated != null) {
+				caUpdated(changes, colors);
+			}
+		}
+
+		private void sendError(CAErrorType type, string message) {
+			if(caError != null) {
+				caError(type, message);
+			}
+		}
+
+		private void clearUI(uint defaultState) {
+			foreach(uint[] b in board) {
+				for(int i = 0; i < b.Length; i++) {
+					b[i] = defaultState;
+				}
+			}
+			if(caCleared != null) {
+				caCleared(defaultState, colors);
+			}
+		}
+
+		private void colorsUpdated() {
+			if(caColorChange != null) {
+				uint[][] board2 = new uint[500][];
+				for(int i = 0; i < board2.Length; i++) {
+					board2[i] = new uint[500];
+				}
+				for(int i = 0; i < board.Length; i++) {
+					for(int j = 0; j < board.Length; j++) {
+						board2[i][j] = board[i][j];
+					}
+				}
+				caColorChange(board2, colors);
+			}
+		}
+
+		private void queueThread() {
+
+			while(true) {
+				CAStateEvent ev = null;
+				lock(queueLock) {
+					while(queue.Count == 0) {
+						Monitor.Wait(queueLock);
+					}
+					ev = queue.Dequeue();
+				}
+				ev();
+			}
 		}
 	}
 }

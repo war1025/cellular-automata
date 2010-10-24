@@ -75,6 +75,14 @@ namespace CAClient {
 			}
 		}
 
+		public static CAComponents parseCASettings(string name, uint numStates, uint defaultState, string neighborhood, string delta) {
+			CAutamata.Point[] nb = parseNeighborhood(neighborhood, null);
+
+			string code = writeCode(name, numStates, nb, delta);
+
+			return new CAComponents(code, new Color[0], defaultState, numStates);
+		}
+
 		public static CAState parseCAState(string filename) {
 			using(var settings = File.OpenText(filename)) {
 
