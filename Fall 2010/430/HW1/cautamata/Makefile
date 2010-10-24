@@ -20,3 +20,4 @@ libraries3 :
 	gmcs -t:library ./ICASettings.cs
 	gmcs -t:library -r:ICASettings.dll -pkg:wcf ./IController.cs
 	gmcs -t:library -r:ICASettings.dll -r:IController.dll -pkg:wcf ./ClientController.cs
+	gmcs -t:library -r:ICASettings.dll -r:ClientController.dll -r:System.Drawing ./ClientUI.cs ./CAParser.cs 

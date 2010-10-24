@@ -8,7 +8,7 @@ using CAutamata;
 namespace CAClient {
 
 	public enum CAErrorType { StateLoad, CALoad, StateSave, Play, Stop, Step, Clear, Update }
-	private enum State { UnInited, Running, Stopped }
+	internal enum State { UnInited, Running, Stopped }
 
 	public delegate void CAStateUpdate(Dictionary<Point, uint> updates, System.Drawing.Color[] colors);
 	public delegate void CAStateClear(uint state, System.Drawing.Color[] colors);
@@ -80,7 +80,7 @@ namespace CAClient {
 
 			enqueue(() => {
 				if(curState == State.Running) {
-					var ret = controller.stop();
+					controller.stop();
 					var changes = controller.pullChanges();
 					curState = State.Stopped;
 					updateUI(changes);
@@ -98,7 +98,7 @@ namespace CAClient {
 						controller.pushChanges(pendingChanges);
 						pendingChanges.Clear();
 					}
-					var ret = controller.step();
+					controller.step();
 					var changes = controller.pullChanges();
 					updateUI(changes);
 				} else {
@@ -128,7 +128,7 @@ namespace CAClient {
 					uint newState = (board[p.x][p.y] + 1) % numStates;
 					pendingChanges[p] = newState;
 					var dict = new Dictionary<Point, uint>();
-					dict[p] = state;
+					dict[p] = newState;
 					updateUI(dict);
 				} else {
 					sendError(CAErrorType.Update, "Simulation must be stopped before points can be updated");
@@ -249,24 +249,27 @@ namespace CAClient {
 		public void shutdown() {
 
 			enqueue(() => {
-				switch(curState) {
-					case State.Running : controller.stop();
-					case State.Stopped : controller.shutDown(); curState = State.UnInited;
+				if(curState == State.Running) {
+					controller.stop();
 				}
+				if(curState != State.UnInited) {
+					controller.shutdown();
+				}
+				curState = State.UnInited;
 			});
 		}
 
 		private void enqueue(CAStateEvent stateEvent) {
 			lock(queueLock) {
 				queue.Enqueue(stateEvent);
-				Monitor.pulseAll(queueLock);
+				Monitor.PulseAll(queueLock);
 			}
 		}
 
 		private void assignColors(int start) {
 			var rand = new System.Random();
 			for(int i = start; i < colors.Length; i++) {
-				colors[i] = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+				colors[i] = System.Drawing.Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
 			}
 		}
 
