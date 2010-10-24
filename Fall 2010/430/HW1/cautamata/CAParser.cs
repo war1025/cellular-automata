@@ -13,11 +13,13 @@ namespace CAClient {
 		public string code;
 		public Color[] colors;
 		public uint defaultState;
+		public uint numStates;
 
-		public CAComponents(string code, Color[] colors, uint defaultState) {
+		public CAComponents(string code, Color[] colors, uint defaultState, uint numStates) {
 			this.code = code;
 			this.colors = colors;
 			this.defaultState = defaultState;
+			this.numStates = numStates;
 		}
 
 	}
@@ -40,60 +42,62 @@ namespace CAClient {
 
 		}
 
-		public CAComponents parseCASettings(string filename) {
-			var settings = File.OpenText(filename);
-			uint numStates = 0;
-			uint defaultState = 0;
-			CAutamata.Point[] neighborhood = null;
-			Color[] colors = null;
-			string delta = null;
-			string name = null;
+		public static CAComponents parseCASettings(string filename) {
+			using(var settings = File.OpenText(filename)) {
+				uint numStates = 0;
+				uint defaultState = 0;
+				CAutamata.Point[] neighborhood = null;
+				Color[] colors = null;
+				string delta = null;
+				string name = null;
 
-			string curLine = null;
+				string curLine = null;
 
-			while((curLine = settings.ReadLine()) != null) {
-				if(curLine.StartsWith("NumStates")) {
-					numStates = UInt32.Parse(curLine.Split(new char[] {':'}, 2)[1]);
-				} else if(curLine.StartsWith("DefaultState")) {
-					defaultState = UInt32.Parse(curLine.Split(new char[] {':'},2)[1]);
-				} else if(curLine.StartsWith("Name")) {
-					name = curLine.Split(new char[] {':'},2)[1];
-				} else if(curLine.StartsWith("Neighborhood")) {
-					neighborhood = parseNeighborhood(curLine.Split(new char[] {':'},2)[1], settings);
-				} else if(curLine.StartsWith("Colors")) {
-					colors = parseColors(curLine.Split(new char[] {':'},2)[1], settings);
-				} else if(curLine.StartsWith("Delta")) {
-					delta = parseDelta(curLine.Split(new char[] {':'},2)[1], settings);
+				while((curLine = settings.ReadLine()) != null) {
+					if(curLine.StartsWith("NumStates")) {
+						numStates = UInt32.Parse(curLine.Split(new char[] {':'}, 2)[1]);
+					} else if(curLine.StartsWith("DefaultState")) {
+						defaultState = UInt32.Parse(curLine.Split(new char[] {':'},2)[1]);
+					} else if(curLine.StartsWith("Name")) {
+						name = curLine.Split(new char[] {':'},2)[1];
+					} else if(curLine.StartsWith("Neighborhood")) {
+						neighborhood = parseNeighborhood(curLine.Split(new char[] {':'},2)[1], settings);
+					} else if(curLine.StartsWith("Colors")) {
+						colors = parseColors(curLine.Split(new char[] {':'},2)[1], settings);
+					} else if(curLine.StartsWith("Delta")) {
+						delta = parseDelta(curLine.Split(new char[] {':'},2)[1], settings);
+					}
 				}
+
+				string code = writeCode(name, numStates, neighborhood, delta);
+
+				return new CAComponents(code, colors, defaultState, numStates);
 			}
-
-			string code = writeCode(name, numStates, neighborhood, delta);
-
-			return new CAComponents(code, colors, defaultState);
 		}
 
-		public CAState parseCAState(string filename) {
-			var settings = File.OpenText(filename);
+		public static CAState parseCAState(string filename) {
+			using(var settings = File.OpenText(filename)) {
 
-			uint defaultState = 0;
-			var points = new Dictionary<CAutamata.Point, uint>();
+				uint defaultState = 0;
+				var points = new Dictionary<CAutamata.Point, uint>();
 
-			string curLine = null;
+				string curLine = null;
 
-			while((curLine = settings.ReadLine()) != null) {
-				if(curLine.StartsWith("DefaultState")) {
-					defaultState = UInt32.Parse(curLine.Split(new char[] {':'})[1]);
-				} else if(curLine.StartsWith("(")) {
-					string[] parts = curLine.Split(new char[] {':'});
-					string[] point = parts[0].Split(new char[] {'(',',',')'});
-					points[new CAutamata.Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
+				while((curLine = settings.ReadLine()) != null) {
+					if(curLine.StartsWith("DefaultState")) {
+						defaultState = UInt32.Parse(curLine.Split(new char[] {':'})[1]);
+					} else if(curLine.StartsWith("(")) {
+						string[] parts = curLine.Split(new char[] {':'});
+						string[] point = parts[0].Split(new char[] {'(',',',')'});
+						points[new CAutamata.Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
+					}
 				}
-			}
 
-			return new CAState(defaultState, points);
+				return new CAState(defaultState, points);
+			}
 		}
 
-		public void saveCAState(string filename, uint[][] board) {
+		public static void saveCAState(string filename, uint[][] board) {
 			var count = new Dictionary<uint, uint>();
 			foreach (uint[] a in board) {
 				foreach (uint b in a) {
@@ -113,22 +117,22 @@ namespace CAClient {
 				}
 			}
 
-			var writer = new StreamWriter(filename);
+			using(var writer = new StreamWriter(filename)) {
 
-			writer.Write("DefaultState : " + defaultState + "\n");
+				writer.Write("DefaultState : " + defaultState + "\n");
 
-			for(int i = 0; i < board.Length; i++) {
-				for(int j = 0; j < board[i].Length; j++) {
-					if(board[i][j] != defaultState) {
-						writer.Write("(" + i + "," + j + ") : " + board[i][j] + "\n");
+				for(int i = 0; i < board.Length; i++) {
+					for(int j = 0; j < board[i].Length; j++) {
+						if(board[i][j] != defaultState) {
+							writer.Write("(" + i + "," + j + ") : " + board[i][j] + "\n");
+						}
 					}
 				}
 			}
 
-			writer.Close();
 		}
 
-		private string parseBrackets(string first, StreamReader reader) {
+		private static string parseBrackets(string first, StreamReader reader) {
 			if(!first.Contains("{")) {
 				return null;
 			}
@@ -148,7 +152,7 @@ namespace CAClient {
 			return sb.ToString();
 		}
 
-		private CAutamata.Point[] parseNeighborhood(string first, StreamReader reader) {
+		private static CAutamata.Point[] parseNeighborhood(string first, StreamReader reader) {
 			string neighborhood = parseBrackets(first, reader);
 			string[] points = neighborhood.Split(new char[] {';'});
 			CAutamata.Point[] ret = new CAutamata.Point[points.Length];
@@ -162,7 +166,7 @@ namespace CAClient {
 			return ret;
 		}
 
-		private Color[] parseColors(string first, StreamReader reader) {
+		private static Color[] parseColors(string first, StreamReader reader) {
 			string color = parseBrackets(first, reader);
 
 			string[] colors = color.Split(new char[] {'{',',','}'});
@@ -175,11 +179,11 @@ namespace CAClient {
 			return ret;
 		}
 
-		private string parseDelta(string first, StreamReader reader) {
+		private static string parseDelta(string first, StreamReader reader) {
 			return parseBrackets(first, reader);
 		}
 
-		private string writeCode(string name, uint numStates, CAutamata.Point[] neighborhood, string delta) {
+		private static string writeCode(string name, uint numStates, CAutamata.Point[] neighborhood, string delta) {
 			StringBuilder sb = new StringBuilder();
 
 			sb.AppendLine("using CAutamata;");

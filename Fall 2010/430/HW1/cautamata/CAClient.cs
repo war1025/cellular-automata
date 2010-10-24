@@ -13,10 +13,8 @@ namespace CAClient {
 
 			bool ret = false;
 
-			CAParser parser = new CAParser();
-
-			CAComponents comps = parser.parseCASettings(args[0]);
-			CAState state = parser.parseCAState(args[1]);
+			CAComponents comps = CAParser.parseCASettings(args[0]);
+			CAState state = CAParser.parseCAState(args[1]);
 
 			Console.WriteLine(comps.code);
 
@@ -67,7 +65,7 @@ namespace CAClient {
 			Console.WriteLine(dict2.Count);
 			controller.shutdown();
 
-			parser.saveCAState(args[2], board);
+			CAParser.saveCAState(args[2], board);
 
 		}
 	}
