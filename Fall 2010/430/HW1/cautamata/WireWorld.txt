@@ -1,0 +1,29 @@
+
+Name : WireWorld
+
+NumStates : 4
+
+Neighborhood : { (0,0) ; (-1,0) ; (-1,1) ;
+					(0,-1) ; (-1,-1) ; (0,1) ;
+					(1,-1) ; (1,0) ; (1,1) }
+
+Delta : {
+	uint val = nb[0];
+	if(val == 0) {
+		return 0;
+	} else if(val == 1) {
+		return 2;
+	} else if(val == 2) {
+		return 3;
+	}
+	uint sum = 0;
+	for(int i = 1; i < nb.Length; i++) {
+		if(nb[i] == 1) {
+			sum ++;
+		}
+	}
+	if(sum == 1 || sum == 2) {
+		return 1;
+	}
+	return 3;
+}

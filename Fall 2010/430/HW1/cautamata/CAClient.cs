@@ -11,10 +11,13 @@ namespace CAClient {
 			var client = new ClientUI("http://localhost:8080");
 
 			client.caUpdated += (p,c) => {
+					var sb = new System.Text.StringBuilder();
 					foreach( var kv in p) {
-						Console.WriteLine(kv.Key + ": " + kv.Value);
+						sb.AppendLine(kv.Key + ": " + kv.Value);
 					}
-					Console.WriteLine(p.Count);
+					sb.Append(p.Count);
+					Console.WriteLine(sb);
+					client.pullChanges();
 				};
 
 			client.caError += (e, m) => {Console.WriteLine(m);};
@@ -24,10 +27,7 @@ namespace CAClient {
 
 			client.start();
 
-			for(int i = 0; i < 10; i++) {
-				Console.ReadLine();
-				client.pullChanges();
-			}
+			Console.ReadLine();
 
 			client.stop();
 
