@@ -20,6 +20,7 @@ namespace CAClient {
 
 		private ClientController controller;
 		private System.Drawing.Color[] colors;
+		private string address;
 
 		private uint[][] board;
 		private uint numStates;
@@ -40,9 +41,7 @@ namespace CAClient {
 		public ClientUI(string address) {
 
 			this.controller = new ClientController(address);
-
-			controller.stop();
-			controller.shutdown();
+			this.address = address;
 
 			this.queueLock = new object();
 			this.queue = new Queue<CAStateEvent>();
@@ -246,8 +245,14 @@ namespace CAClient {
 
 			enqueue(() => {
 				if(curState == State.Running) {
-					var changes = controller.pullChanges();
-					updateUI(changes);
+					try {
+						var changes = controller.pullChanges();
+						updateUI(changes);
+					} catch(System.TimeoutException e) {
+						sendError(CAErrorType.Update, "WCF Call timed out");
+						this.controller.Close();
+						this.controller = new ClientController(address);
+					}
 				}
 			});
 		}
