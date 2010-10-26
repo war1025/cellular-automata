@@ -41,6 +41,9 @@ namespace CAClient {
 
 			this.controller = new ClientController(address);
 
+			controller.stop();
+			controller.shutdown();
+
 			this.queueLock = new object();
 			this.queue = new Queue<CAStateEvent>();
 
