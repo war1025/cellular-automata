@@ -249,7 +249,7 @@ namespace CAClient {
 						var changes = controller.pullChanges();
 						updateUI(changes);
 					} catch(System.TimeoutException e) {
-						sendError(CAErrorType.Update, "WCF Call timed out");
+						sendError(CAErrorType.Update, "WCF call timed out while pulling changes, state may be corrupted.");
 						this.controller.Close();
 						this.controller = new ClientController(address);
 					}
