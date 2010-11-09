@@ -1,0 +1,11 @@
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClientUI.dll
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClientUI.pdb
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClassLibrary2.dll
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClassLibrary3.dll
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClassLibrary2.pdb
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ClassLibrary3.pdb
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\obj\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\obj\Debug\ClientUI.dll
+C:\Documents and Settings\Wayne\my documents\visual studio 2010\Projects\WpfApplication1\ClientUI\obj\Debug\ClientUI.pdb
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ICASettings.dll
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClientUI\bin\Debug\ICASettings.pdb

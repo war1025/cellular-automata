@@ -1,0 +1,412 @@
+
+using System.Collections.Generic;
+using System.Threading;
+
+using CAutamata;
+
+
+namespace CAClient {
+
+	public enum CAErrorType { StateLoad, CALoad, StateSave, Play, Stop, Step, Clear, Update }
+	public enum State { UnInited, Running, Stopped }
+
+	public delegate void CAStateUpdate(Dictionary<Point, uint> updates, System.Drawing.Color[] colors);
+	public delegate void CAStateClear(uint state, System.Drawing.Color[] colors);
+	public delegate void CAStateTransition(State newState);
+	public delegate void CAError(CAErrorType type, string message);
+	public delegate void CAColorChange(uint[][] board, System.Drawing.Color[] colors);
+	internal delegate void CAStateEvent();
+
+	public class ClientUI {
+
+		private ClientController controller;
+		private System.Drawing.Color[] colors;
+		private string address;
+
+		private uint[][] board;
+		private uint numStates;
+
+		private Dictionary<Point, uint> pendingChanges;
+
+		private object queueLock;
+		private Queue<CAStateEvent> queue;
+		private State curState;
+
+		private bool running;
+
+		public event CAStateUpdate caUpdated;
+		public event CAStateClear caCleared;
+		public event CAStateTransition caTransition;
+		public event CAError caError;
+		public event CAColorChange caColorChange;
+
+		public ClientUI(string address) {
+
+			this.controller = new ClientController(address);
+			this.address = address;
+
+			this.queueLock = new object();
+			this.queue = new Queue<CAStateEvent>();
+
+			this.pendingChanges = new Dictionary<Point, uint>();
+			this.curState = State.UnInited;
+			this.running = true;
+
+			this.board = new uint[500][];
+			for(int i = 0; i < 500; i++) {
+				board[i] = new uint[500];
+			}
+
+			var thread = new Thread(queueThread);
+			thread.Start();
+
+		}
+
+		public void start() {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					if(pendingChanges.Count > 0) {
+						controller.pushChanges(toArr(pendingChanges));
+						pendingChanges.Clear();
+					}
+					if(controller.start()) {
+						stateTransition(State.Running);
+						pullChanges();
+					} else {
+						sendError(CAErrorType.Play, "Could not start simulation");
+					}
+				} else {
+					sendError(CAErrorType.Play, "Simulation must be stopped before it can be started");
+				}
+			});
+		}
+
+		public void stop() {
+
+			enqueue(() => {
+				if(curState == State.Running) {
+					controller.stop();
+					var changes = toDict(controller.pullChanges());
+					stateTransition(State.Stopped);
+					updateUI(changes);
+				} else {
+					sendError(CAErrorType.Stop, "Simulation must be running before it can be stopped");
+				}
+			});
+		}
+
+		public void step() {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					if(pendingChanges.Count > 0) {
+						controller.pushChanges(toArr(pendingChanges));
+						pendingChanges.Clear();
+					}
+					controller.step();
+					var changes = toDict(controller.pullChanges());
+					updateUI(changes);
+				} else {
+					sendError(CAErrorType.Step, "Simulation must be stopped before it can be stepped");
+				}
+			});
+		}
+
+		public void setState(Point p, uint state) {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					pendingChanges[p] = state;
+					var dict = new Dictionary<Point, uint>();
+					dict[p] = state;
+					updateUI(dict);
+				} else {
+					sendError(CAErrorType.Update, "Simulation must be stopped before points can be updated");
+				}
+			});
+		}
+
+		public void toggleState(Point p) {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					uint newState = (board[p.x][p.y] + 1) % numStates;
+					pendingChanges[p] = newState;
+					var dict = new Dictionary<Point, uint>();
+					dict[p] = newState;
+					updateUI(dict);
+				} else {
+					sendError(CAErrorType.Update, "Simulation must be stopped before points can be updated");
+				}
+			});
+		}
+
+		public void loadCA(string filename) {
+
+			enqueue(() => {
+				if((curState == State.Stopped)) {
+					if(!controller.shutdown()) {
+						sendError(CAErrorType.CALoad, "Could not shut down previous CA");
+						return;
+					}
+				}
+				if((curState == State.Stopped) || (curState == State.UnInited)) {
+					var comps = CAParser.parseCASettings(filename);
+					string errors;
+					if(controller.init(comps.code, comps.defaultState, out errors)) {
+						this.numStates = comps.numStates;
+						this.colors = new System.Drawing.Color[numStates];
+						int i = 0;
+						for(i = 0; i < comps.colors.Length; i++) {
+							colors[i] = comps.colors[i];
+						}
+						assignColors(i);
+						stateTransition(State.Stopped);
+						clearUI(comps.defaultState);
+					} else {
+						stateTransition(State.UnInited);
+						sendError(CAErrorType.CALoad, "Could not load the CA from the file\n" + errors);
+					}
+				} else {
+					sendError(CAErrorType.CALoad, "Simulation must be stopped before a new CA can be loaded");
+				}
+			});
+		}
+
+		public void loadCA(string name, uint numStates, uint defaultState, string neighborhood, string delta) {
+
+			enqueue(() => {
+				if((curState == State.Stopped)) {
+					if(!controller.shutdown()) {
+						sendError(CAErrorType.CALoad, "Could not shut down previous CA");
+						return;
+					}
+				}
+				if((curState == State.Stopped) || (curState == State.UnInited)) {
+					var comps = CAParser.parseCASettings(name, numStates, defaultState, neighborhood, delta);
+					string errors;
+					if(controller.init(comps.code, comps.defaultState, out errors)) {
+						this.numStates = comps.numStates;
+						this.colors = new System.Drawing.Color[numStates];
+						assignColors(0);
+						stateTransition(State.Stopped);
+						clearUI(comps.defaultState);
+					} else {
+						stateTransition(State.UnInited);
+						sendError(CAErrorType.CALoad, "Could not load the described CA\n" + errors);
+					}
+				} else {
+					sendError(CAErrorType.CALoad, "Simulation must be stopped before a new CA can be loaded");
+				}
+			});
+		}
+
+
+		public void loadState(string filename) {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					var state = CAParser.parseCAState(filename);
+					controller.shutdown();
+					if(controller.reinit(state.defaultState)) {
+						controller.pushChanges(toArr(state.states));
+						clearUI(state.defaultState);
+						updateUI(state.states);
+					} else {
+						sendError(CAErrorType.StateLoad, "Could not load the CA state from file");
+					}
+				} else {
+					sendError(CAErrorType.StateLoad, "Simulation must be stopped before a state can be loaded");
+				}
+			});
+		}
+
+		public void clearState(uint val) {
+
+			enqueue(() => {
+				if (curState == State.Stopped) {
+					if (val < numStates) {
+						controller.shutdown();
+						if (controller.reinit(val)) {
+							clearUI(val);
+						} else {
+							sendError(CAErrorType.StateLoad, "Could not clear the grid to state: " + val);
+						}
+					} else {
+						sendError(CAErrorType.StateLoad, "State value out of range.");
+					}
+				} else {
+					sendError(CAErrorType.StateLoad, "Simulation must be stopped before the grid can be cleared");
+				}
+			});
+		}
+
+		public void saveState(string filename) {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					CAParser.saveCAState(filename, board);
+				} else {
+					sendError(CAErrorType.StateSave, "Simulation must be stopped before a state can be saved");
+				}
+			});
+		}
+
+		public void setColor(uint state, System.Drawing.Color color) {
+
+			enqueue(() => {
+				if(curState == State.Stopped) {
+					colors[state] = color;
+					colorsUpdated();
+				} else {
+					sendError(CAErrorType.Update, "Simulation must be stopped to updated colors");
+				}
+			});
+		}
+
+		public void pullChanges() {
+
+			enqueue(() => {
+				if(curState == State.Running) {
+					var changes = toDict(controller.pullChanges());
+					updateUI(changes);
+				}
+			});
+		}
+
+		public void shutdown() {
+
+			enqueue(() => {
+				if(curState == State.Running) {
+					controller.stop();
+				}
+				if(curState != State.UnInited) {
+					controller.shutdown();
+				}
+				stateTransition(State.UnInited);
+				this.running = false;
+			});
+		}
+
+		private void enqueue(CAStateEvent stateEvent) {
+			lock(queueLock) {
+				queue.Enqueue(stateEvent);
+				Monitor.PulseAll(queueLock);
+			}
+		}
+
+		private void assignColors(int start) {
+			var rand = new System.Random();
+			for(int i = start; i < colors.Length; i++) {
+				colors[i] = System.Drawing.Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+			}
+		}
+
+		private Dictionary<Point, uint> toDict(int[] arr) {
+			var ret = new Dictionary<Point, uint>();
+			foreach (int i in arr) {
+				int x = (i >> 23) & (0x1ff);
+				int y = (i >> 14) & (0x1ff);
+				uint val = (uint)i & (0x3fff);
+				ret[new Point(x, y)] = val;
+			}
+			return ret;
+		}
+
+		private int[] toArr(Dictionary<Point, uint> ret) {
+			var ret2 = new List<int>();
+			foreach (KeyValuePair<Point, uint> kv in ret) {
+				Point p = kv.Key;
+				int val = (int)(kv.Value & (0x3fff));
+				val |= p.x << 23;
+				val |= p.y << 14;
+				ret2.Add(val);
+			}
+			return ret2.ToArray();
+		}
+
+		private void updateUI(Dictionary<Point, uint> changes) {
+			foreach(var kv in changes) {
+				Point p = kv.Key;
+				board[p.x][p.y] = kv.Value;
+				if (kv.Value >= numStates) {
+					sendError(CAErrorType.Update, "The CA transitioned to an illegal state and has been shut down.");
+					if (curState == State.Running) {
+						controller.stop();
+					}
+					controller.shutdown();
+					stateTransition(State.UnInited);
+					return;
+				}
+			}
+			if(caUpdated != null) {
+				caUpdated(changes, colors);
+			}
+		}
+
+		private void sendError(CAErrorType type, string message) {
+			if(caError != null) {
+				caError(type, message);
+			}
+		}
+
+		private void clearUI(uint defaultState) {
+			if (defaultState >= numStates) {
+				sendError(CAErrorType.Update, "The CA transitioned to an illegal state and has been shut down.");
+				if (curState == State.Running) {
+					controller.stop();
+				}
+				controller.shutdown();
+				stateTransition(State.UnInited);
+				return;
+			}
+			foreach(uint[] b in board) {
+				for(int i = 0; i < b.Length; i++) {
+					b[i] = defaultState;
+				}
+			}
+			if(caCleared != null) {
+				caCleared(defaultState, colors);
+			}
+		}
+
+		private void colorsUpdated() {
+			if(caColorChange != null) {
+				uint[][] board2 = new uint[500][];
+				for(int i = 0; i < board2.Length; i++) {
+					board2[i] = new uint[500];
+				}
+				for(int i = 0; i < board.Length; i++) {
+					for(int j = 0; j < board.Length; j++) {
+						board2[i][j] = board[i][j];
+					}
+				}
+				caColorChange(board2, colors);
+			}
+		}
+
+		private void stateTransition(State state) {
+			this.curState = state;
+			if (caTransition != null) {
+				caTransition(state);
+			}
+		}
+
+		private void queueThread() {
+
+			while(running) {
+				CAStateEvent ev = null;
+				lock(queueLock) {
+					while(queue.Count == 0) {
+						Monitor.Wait(queueLock);
+					}
+					ev = queue.Dequeue();
+				}
+				ev();
+			}
+		}
+	}
+}
+
+

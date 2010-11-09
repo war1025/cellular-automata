@@ -1,0 +1,7 @@
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\bin\Release\ClassLibrary2.dll
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\bin\Release\ClassLibrary2.pdb
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\bin\Release\ICASettings.dll
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\bin\Release\ICASettings.pdb
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\obj\Release\ResolveAssemblyReference.cache
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\obj\Release\ClassLibrary2.dll
+C:\Documents and Settings\Wayne\My Documents\Visual Studio 2010\Projects\WpfApplication1\ClassLibrary2\obj\Release\ClassLibrary2.pdb

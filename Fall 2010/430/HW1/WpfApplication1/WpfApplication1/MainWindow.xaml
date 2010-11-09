@@ -1,0 +1,51 @@
+﻿<Window x:Class="WpfApplication1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cellular Autamata Simulator" Closing="Window_Closing" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="552" d:DesignWidth="647" SizeToContent="WidthAndHeight">
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <StackPanel Orientation="Vertical" Margin="12,12,0,12">
+            <StackPanel Orientation="Horizontal">
+                <ScrollViewer Name="caScroller" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Width="500" Height="500">
+                    <Image RenderOptions.BitmapScalingMode="NearestNeighbor" Name="caImage" Width="500" Height="500" MouseWheel="caImage_MouseWheel" MouseLeftButtonDown="caImage_MouseLeftButtonDown" />
+                </ScrollViewer>
+                <ScrollBar Name="vScroll" Maximum="500" LargeChange="10" ValueChanged="vScroll_ValueChanged" SmallChange="1" />
+            </StackPanel>
+            <ScrollBar Name="hScroll" Orientation="Horizontal" Maximum="500" LargeChange="10" ValueChanged="hScroll_ValueChanged" SmallChange="1" />
+        </StackPanel>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Margin="4,4,4,4" Name="stackPanel1" VerticalAlignment="Bottom">
+            <StackPanel Name="caBox" Margin="0,0,0,5">
+                <Label Content="Current State:" />
+                <Label Name="curCA" Content="UnInited" Margin="20,0,0,0" />
+            </StackPanel>
+            <StackPanel Name="caLoadBox" Margin="0,0,0,5">
+                <Label Content="Current CA:" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Name="caLoad" Content="Load" VerticalAlignment="Center" Click="CA_Load" />
+                    <Button Name="caCreate" Content="Create" VerticalAlignment="Center" Click="CA_Create" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="stateBox" Margin="0,0,0,5">
+                <Label Content="Grid State:" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Button Name="stateLoad" Content="Load" VerticalAlignment="Center" Click="State_Load" />
+                    <Button Name="stateSave" Content="Save" VerticalAlignment="Center" Click="State_Save" />
+                    <Button Name="stateClear" Content="Clear" VerticalAlignment="Center" Click="State_Clear" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Name="statesBox" Margin="0,0,0,5">
+                <Label Content="States" />
+                <ListBox Height="100" Name="listBox1"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Zoom" Height="28" Name="zoomLabel" />
+                <Slider Name="zoomSlider" Width="50" Maximum="100" Minimum="1" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Button Name="caPlay" Content="Play" VerticalAlignment="Center" Click="CA_Play" />
+                <Button Name="caPause" Content="Pause" VerticalAlignment="Center" Click="CA_Pause" />
+                <Button Name="caStep" Content="Step" VerticalAlignment="Center" Click="CA_Step" />
+            </StackPanel>
+        </StackPanel>
+       
+    </StackPanel>
+</Window>
