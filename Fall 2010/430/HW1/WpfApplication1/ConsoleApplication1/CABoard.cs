@@ -151,6 +151,8 @@ namespace CAutamata {
 					// First copy the points into  an array. This allows for easy partitioning of the work
 					Point[] pts = new Point[points.Count];
 					points.CopyTo(pts);
+					// Because I'm not sure if I need this or not but I might so here it is.
+					Thread.MemoryBarrier();
 					// Calculate about how many points each thread should check
 					int step = pts.Length / stepThreads.Length;
 					int start = 0;
