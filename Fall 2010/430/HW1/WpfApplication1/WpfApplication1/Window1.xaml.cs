@@ -12,14 +12,18 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace WpfApplication1 {
-    /// <summary>
-    /// Interaction logic for Window1.xaml
-    /// </summary>
-    public partial class Window1 : Window {
-        public Window1() {
-            InitializeComponent();
-        }
 
+	/**
+	 * The dialog for creating a CA
+	 **/
+	public partial class Window1 : Window {
+		public Window1() {
+			InitializeComponent();
+		}
+
+		/**
+		 * Name of the CA
+		 **/
 		public string CAName {
 			get {
 				return nameBox.Text;
@@ -30,6 +34,9 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Number of states in the CA
+		 **/
 		public uint NumStates {
 			get {
 				uint val;
@@ -44,6 +51,9 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Neighborhood string for the CA
+		 **/
 		public string Neighborhood {
 			get {
 				return "{" + neighborhoodBox.Text + "}";
@@ -54,6 +64,9 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Delta function for the CA
+		 **/
 		public string Delta {
 			get {
 				return "{" + deltaBox.Text + "}";
@@ -64,9 +77,12 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Set dialog result to true so the dialog knows to close
+		 **/
 		private void ok_Click(object sender, RoutedEventArgs e) {
 			DialogResult = true;
 		}
-    }
-		
+	}
+
 }

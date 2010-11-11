@@ -6,10 +6,16 @@ using System.ServiceModel.Channels;
 
 namespace CAServer {
 
+	/**
+	 * Server class for publishing the service over wcf
+	 **/
 	public class Test {
 
+		/**
+		 * Publish the service using a nettcp binding over localhost.
+		 * Adjust parameters to allow for large data transfers.
+		 **/
 		public static void Main() {
-
 			var binding = new NetTcpBinding ();
 			binding.MaxReceivedMessageSize = 10000000;
 			binding.ReaderQuotas.MaxArrayLength = 250000;

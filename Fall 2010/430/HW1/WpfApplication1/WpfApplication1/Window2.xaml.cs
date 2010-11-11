@@ -13,20 +13,27 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
 namespace WpfApplication1 {
-	/// <summary>
-	/// Interaction logic for Window2.xaml
-	/// </summary>
+
+	/**
+	 * Clear state dialog
+	 **/
 	public partial class Window2 : Window {
 		public Window2() {
 			InitializeComponent();
 		}
 
+		/**
+		 * Text of the box
+		 **/
 		public string Text {
 			get {
 				return textBox1.Text;
 			}
 		}
 
+		/**
+		 * Set dialog result to true so the dialog knows to close
+		 **/
 		private void ok_Click(object sender, RoutedEventArgs e) {
 			if (textBox1.Text != null) {
 				DialogResult = true;
@@ -34,17 +41,4 @@ namespace WpfApplication1 {
 		}
 	}
 
-	public class StateClearValidationRule : ValidationRule {
-
-		public override ValidationResult Validate(object value, CultureInfo cultureInfo) {
-			uint val;
-
-			if (!uint.TryParse((string)value, out val)) {
-				return new ValidationResult(false, "Must be an unsigned integer");
-			} else {
-				return new ValidationResult(true, null);
-			}
-		}
-
-	}
 }

@@ -16,20 +16,28 @@ using CAClient;
 using System.Windows.Controls.Primitives;
 
 namespace WpfApplication1 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    ///
-    public partial class MainWindow : Window {
 
-        private ClientUI clientui;
-        private WriteableBitmap bitmap;
+	/**
+	 * The main window of the CA GUI
+	 **/
+	public partial class MainWindow : Window {
+
+		// Our clientUI instance
+		private ClientUI clientui;
+		// The writeable bitmap we are drawing to
+		private WriteableBitmap bitmap;
+		// Current state
 		private State curState;
+		// The state of the CA we are trying to create in the pop-up dialog
 		private CreateCAState state;
-        
-        public MainWindow() {
-            InitializeComponent();
-            clientui = new ClientUI("net.tcp://localhost:8080");
+
+		/**
+		 * Initialize a new MainWindow. We establish a connection to the clientUI and connect a bunch of events.
+		 * Also initialize the components such as the bitmap
+		 **/
+		public MainWindow() {
+			InitializeComponent();
+			clientui = new ClientUI("net.tcp://localhost:8080");
 			bitmap = new WriteableBitmap(500, 500, 96, 96, PixelFormats.Bgr32, null);
 			caTransition(State.UnInited);
 			clientui.caTransition += caTransition;
@@ -50,12 +58,16 @@ namespace WpfApplication1 {
 			vScroll.Opacity = 0;
 
 			state = new CreateCAState();
-			
-			
-           
-        }
+		}
 
+		/**
+		 * Transition to the given state. This involves enabling / disabling controls that do / don't make sense
+		 * in the new state.
+		 *
+		 * @param s The state to transition to
+		 **/
 		private void caTransition(State s) {
+			// Do this on the dispatcher thread
 			curCA.Dispatcher.BeginInvoke(new Action(() => {
 				curCA.Content = s.ToString();
 				curState = s;
@@ -95,21 +107,33 @@ namespace WpfApplication1 {
 
 		}
 
+		/**
+		 * Event for when the zoom slider is changed. Zoom the bitmap accordingly.
+		 **/
 		private void zoomSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
 			zoom(e.NewValue);
 		}
 
+		/**
+		 * Zoom the bitmap, update the scroll bars to be in the correct positions.
+		 *
+		 * @param zoom The amount of zoom we are currently under
+		 **/
 		private void zoom(double zoom) {
 			var sc = (ScaleTransform)caImage.RenderTransform;
+			// Set the zoom on the bitmap
 			sc.ScaleX = zoom;
 			sc.ScaleY = zoom;
+			// Change the scroll bar length appropriately
 			vScroll.SetThumbLength(500 / zoom);
 			hScroll.SetThumbLength(500 / zoom);
+			// If we are at default zoom, hide the scroll bars
 			if (zoom == 1) {
 				sc.CenterY = 0;
 				sc.CenterX = 0;
 				hScroll.Opacity = 0;
 				vScroll.Opacity = 0;
+			// Otherwise, position them correctly
 			} else {
 				hScroll.Opacity = 1;
 				vScroll.Opacity = 1;
@@ -119,11 +143,20 @@ namespace WpfApplication1 {
 				var yCen = vScroll.GetThumbCenter();
 				sc.CenterY = ((yCen - (yLen / 2)) / (500 - yLen)) * 500;
 				sc.CenterX = ((xCen - (xLen / 2)) / (500 - xLen)) * 500;
-			}	
-			
+			}
+
 		}
 
+		/**
+		 * Connects the the clientUI.updateUI event
+		 *
+		 * Updates the proper pixels and paints them the proper color
+		 *
+		 * @param dict The points that have changed
+		 * @param colors The colors for each state
+		 **/
 		private void updateUI(Dictionary<CAutamata.Point, uint> dict, System.Drawing.Color[] colors) {
+			// Convert the colors to integer values to write to the bitmap
 			int[] cvals = new int[colors.Length];
 			for(int i = 0; i < colors.Length; i++) {
 				cvals[i] = colors[i].R << 16;
@@ -131,6 +164,7 @@ namespace WpfApplication1 {
 				cvals[i] |= colors[i].B;
 			}
 
+			// On this dispatcher thread, lock the bitmap, paint the changes
 			caImage.Dispatcher.BeginInvoke(new Action(() => {
 				bitmap.Lock();
 
@@ -150,11 +184,23 @@ namespace WpfApplication1 {
 
 				bitmap.Unlock();
 
+				// Pull more changes. This Creates the animation.
+				// This means the animation will run as quickly as possible.
+				// Pull changes is a no-op if the state is not running. This is how we stop animating
 				clientui.pullChanges();
 			}));
 		}
 
+		/**
+		 * Connect to the clientUI.clearUI event
+		 *
+		 * Clears the bitmap to the given state
+		 *
+		 * @param val The state to clear to
+		 * @param colors The colors for each state
+		 **/
 		private void clearUI(uint val, System.Drawing.Color[] colors) {
+			// Convert the colors to integer values
 			int[] cvals = new int[colors.Length];
 			for (int i = 0; i < colors.Length; i++) {
 				cvals[i] = colors[i].R << 16;
@@ -163,6 +209,7 @@ namespace WpfApplication1 {
 			}
 			int cval = cvals[val];
 
+			// On the dispatcher thread, repaint the bitmap
 			caImage.Dispatcher.BeginInvoke(new Action(() => {
 				bitmap.Lock();
 
@@ -179,11 +226,21 @@ namespace WpfApplication1 {
 
 				bitmap.Unlock();
 
+				// Pull changes. This is probably a no-op. Could probably be removed.
 				clientui.pullChanges();
 			}));
 		}
 
+		/**
+		 * Connects to the clientUI.colorChange event
+		 * Completely change the color of some states on the board.
+		 * This requires a full repaint
+		 *
+		 * @param board The full state of the board
+		 * @param colors Colors for each state
+		 **/
 		private void colorChange(uint[][] board, System.Drawing.Color[] colors) {
+			// Convert the colors to integer values
 			int[] cvals = new int[colors.Length];
 			for (int i = 0; i < colors.Length; i++) {
 				cvals[i] = colors[i].R << 16;
@@ -191,6 +248,7 @@ namespace WpfApplication1 {
 				cvals[i] |= colors[i].B;
 			}
 
+			// On the dispatcher thread, repaint the bitmap
 			caImage.Dispatcher.BeginInvoke(new Action(() => {
 				bitmap.Lock();
 
@@ -212,11 +270,22 @@ namespace WpfApplication1 {
 			}));
 		}
 
+		/**
+		 * Connect to the clientUI.caClear event
+		 *
+		 * Update the colors in the side state list
+		 **/
 		private void listBox_update(uint[][] bd, System.Drawing.Color[] colors) {
 			listBox_setup(0, colors);
 		}
 
+		/**
+		 * Connect to the clientUI.colorChange event
+		 *
+		 * Update the colors in the side state list
+		 **/
 		private void listBox_setup(uint val, System.Drawing.Color[] colors) {
+			// Convert colors to integer values
 			int[] cvals = new int[colors.Length];
 			for (int i = 0; i < colors.Length; i++) {
 				cvals[i] = colors[i].R << 16;
@@ -224,6 +293,8 @@ namespace WpfApplication1 {
 				cvals[i] |= colors[i].B;
 			}
 
+			// On the dispatcher thread, clear old entries, create a new entry
+			// for each state. Set its color to the color for the state
 			listBox1.Dispatcher.BeginInvoke(new Action(() => {
 				listBox1.Items.Clear();
 				int i = 0;
@@ -243,12 +314,13 @@ namespace WpfApplication1 {
 
 					bmap.AddDirtyRect(new Int32Rect(0, 0, 1, 1));
 					bmap.Unlock();
-					
+
 					sp.Children.Add(img);
 					var label = new Label();
 					label.Content = "State " + i;
 					sp.Children.Add(label);
 					int num = i;
+					// Add an event to bring up a color chooser and change a state's color
 					img.MouseUp += (o, e) => {
 						var cp = new Window3();
 						cp.setColor(cvals[num]);
@@ -262,23 +334,37 @@ namespace WpfApplication1 {
 			}));
 		}
 
+		/**
+		 * Start the CA
+		 **/
+		private void CA_Play(object sender, RoutedEventArgs e) {
+			clientui.start();
+		}
 
-        private void CA_Play(object sender, RoutedEventArgs e) {
-            clientui.start();
-        }
+		/**
+		 * Stop the CA
+		 **/
+		private void CA_Pause(object sender, RoutedEventArgs e) {
+			clientui.stop();
+		}
 
-        private void CA_Pause(object sender, RoutedEventArgs e) {
-            clientui.stop();
-        }
+		/**
+		 * Step the CA
+		 **/
+		private void CA_Step(object sender, RoutedEventArgs e) {
+			clientui.step();
+		}
 
-        private void CA_Step(object sender, RoutedEventArgs e) {
-            clientui.step();
-        }
-
+		/**
+		 * Shutdown the clientUI on window close
+		 **/
 		private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
 			clientui.shutdown();
 		}
 
+		/**
+		 * Show a dialog to select a file then attempt to load a state from the selected file
+		 **/
 		private void State_Load(object sender, RoutedEventArgs e) {
 			var fd = new Microsoft.Win32.OpenFileDialog();
 			if (fd.ShowDialog() == true) {
@@ -287,6 +373,9 @@ namespace WpfApplication1 {
 
 		}
 
+		/**
+		 * Show a dialog to select a save path, then attempt to save the state to file
+		 **/
 		private void State_Save(object sender, RoutedEventArgs e) {
 			var fd = new Microsoft.Win32.SaveFileDialog();
 			if (fd.ShowDialog() == true) {
@@ -294,6 +383,9 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Show a dialog to pick what state to clear to. Attempt to clear to that state
+		 **/
 		private void State_Clear(object sender, RoutedEventArgs e) {
 			var w2 = new Window2();
 			if (w2.ShowDialog() == true) {
@@ -306,6 +398,9 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Show a dialog to pick a CASettings file to load. Attempt to load those CASettings
+		 **/
 		private void CA_Load(object sender, RoutedEventArgs e) {
 			var fd = new Microsoft.Win32.OpenFileDialog();
 			if (fd.ShowDialog() == true) {
@@ -313,6 +408,11 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Pop up the dialog to create a CASettings directly.
+		 * Save the values then attempt to load the CA to the clientUI.
+		 * We save the state to make it easier to fix errors if they occur.
+		 **/
 		private void CA_Create(object sender, RoutedEventArgs e) {
 			var w1 = new Window1();
 			w1.CAName = state.Name;
@@ -328,6 +428,10 @@ namespace WpfApplication1 {
 			}
 		}
 
+		/**
+		 * Horizontal scrolling event.
+		 * Update the bitmap positioning
+		 **/
 		private void vScroll_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
 			var sc = (ScaleTransform)caImage.RenderTransform;
 			if (sc.ScaleY == 1) {
@@ -337,9 +441,13 @@ namespace WpfApplication1 {
 				var yLen = vScroll.GetThumbLength();
 				var yCen = vScroll.GetThumbCenter();
 				sc.CenterY = ((yCen - (yLen / 2)) / (500 - yLen)) * 500;
-			}	
+			}
 		}
 
+		/**
+		 * Vertical scrolling event.
+		 * Update the bitmap positioning
+		 **/
 		private void hScroll_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e) {
 			var sc = (ScaleTransform)caImage.RenderTransform;
 			if (sc.ScaleX == 1) {
@@ -349,9 +457,13 @@ namespace WpfApplication1 {
 				var xLen = hScroll.GetThumbLength();
 				var xCen = hScroll.GetThumbCenter();
 				sc.CenterX = ((xCen - (xLen / 2)) / (500 - xLen)) * 500;
-			}	
+			}
 		}
 
+		/**
+		 * Mouse wheel scrolling.
+		 * The logic here-in should position the bitmap such that the pixel under the cursor does not move if possible.
+		 **/
 		private void caImage_MouseWheel(object sender, MouseWheelEventArgs e) {
 			var sc = (ScaleTransform) caImage.RenderTransform;
 			var pt = e.GetPosition(caImage);
@@ -386,17 +498,23 @@ namespace WpfApplication1 {
 			hScroll.SetThumbCenter(xCen);
 			vScroll.SetThumbCenter(yCen);
 			hScroll_ValueChanged(null, null);
-			vScroll_ValueChanged(null, null);			
+			vScroll_ValueChanged(null, null);
 		}
 
+		/**
+		 * Mousedown event on the bitmap, toggle the point corresponding to the pixel the cursor is over.
+		 **/
 		private void caImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
 			if (curState == State.Stopped) {
 				var p = e.GetPosition(caImage);
 				clientui.toggleState(new CAutamata.Point((int)p.Y, (int)p.X));
 			}
 		}
-    }
+	}
 
+	/**
+	 * State struct for the CreateCA dialog
+	 **/
 	internal struct CreateCAState {
 		public string Name;
 		public uint NumStates;
@@ -405,6 +523,9 @@ namespace WpfApplication1 {
 	}
 
 
+	/**
+	 * Useful extension methods for scrollbars found at the following link.
+	 **/
 	// http://www.wpfmentor.com/2008/12/how-to-set-thumb-position-and-length-of.html
 	internal static class ScrollBarExtensions {
 		public static double GetThumbCenter(this ScrollBar s) {
@@ -449,5 +570,5 @@ namespace WpfApplication1 {
 				s.ViewportSize = double.MaxValue;
 			}
 		}
-	}  
+	}
 }
