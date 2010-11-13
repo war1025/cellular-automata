@@ -267,7 +267,7 @@ namespace CAClient {
 						this.numStates = comps.numStates;
 						this.colors = new System.Drawing.Color[numStates];
 						int i = 0;
-						for(i = 0; i < comps.colors.Length; i++) {
+						for(i = 0; (i < comps.colors.Length) && (i < colors.Length); i++) {
 							colors[i] = comps.colors[i];
 						}
 						assignColors(i);
@@ -341,6 +341,10 @@ namespace CAClient {
 			enqueue(() => {
 				if(curState == State.Stopped) {
 					var state = CAParser.parseCAState(filename);
+					if (state.states == null) {
+						sendError(CAErrorType.StateLoad, "CA State file contains errors");
+						return;
+					}
 					controller.shutdown();
 					if(controller.reinit(state.defaultState)) {
 						controller.pushChanges(toArr(state.states));

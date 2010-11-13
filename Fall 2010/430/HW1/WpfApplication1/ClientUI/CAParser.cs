@@ -186,8 +186,20 @@ namespace CAClient {
 						defaultState = UInt32.Parse(curLine.Split(new char[] {':'})[1]);
 					} else if(curLine.StartsWith("(")) {
 						string[] parts = curLine.Split(new char[] {':'});
+						if (parts.Length != 2) {
+							return new CAState();
+						}
 						string[] point = parts[0].Split(new char[] {'(',',',')'});
-						points[new CAutamata.Point(Int32.Parse(point[1]),Int32.Parse(point[2]))] = UInt32.Parse(parts[1]);
+						if (point.Length != 4) {
+							return new CAState();
+						}
+						int x;
+						int y;
+						uint z;
+						if (!int.TryParse(point[1], out x) || !int.TryParse(point[2], out y) || !uint.TryParse(parts[1], out z)) {
+							return new CAState();
+						}
+						points[new CAutamata.Point(x,y)] = z;
 					}
 				}
 
@@ -267,7 +279,7 @@ namespace CAClient {
 					}
 				}
 				sb.AppendLine(line);
-			} while((bracketCount > 0) && ((line = reader.ReadLine()) != null));
+			} while((bracketCount > 0) && (reader != null) && ((line = reader.ReadLine()) != null));
 
 			return sb.ToString();
 		}
@@ -296,7 +308,12 @@ namespace CAClient {
 				if (parts.Length != 4) {
 					return null;
 				}
-				ret[i] = new CAutamata.Point(Int32.Parse(parts[1]), Int32.Parse(parts[2]));
+				int x;
+				int y;
+				if (!int.TryParse(parts[1], out x) || !int.TryParse(parts[2], out y)) {
+					return null;
+				}
+				ret[i] = new CAutamata.Point(x, y);
 			}
 
 			return ret;

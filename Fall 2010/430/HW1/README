@@ -1,0 +1,141 @@
+
+
+Wayne Rowcliffe
+CS 430
+HW1
+11/12/10
+
+README
+
+Contents:
+	Included files
+	CA Definition file format
+	CA State file format
+	Program instructions
+	Project Architecture Description
+
+
+Included Files:
+
+	Files
+		Acorn.txt - Game of life acorn state file
+		Ant.txt - CA description of Langton's Ant
+		AntStart.txt - Langton's Ant state file
+		Counter.txt - Wireworld binary counter state file
+		Glider.txt - Game of life glider state file
+		GliderGun.txt - Game of life glider gun state file
+		Life.txt - CA description of Game of Life
+		WireWorld.txt - CA description of WireWorld
+	WpfApplication1 - VisualStudio 2010 project directory
+
+
+CA Definition File Format:
+
+	The CA Definition File contains the following parts, where items in < > are assumed to be replaced by a value of the kind described.
+	Entries in curly braces { } can span multiple lines and contain nested braces.
+	Items enclosed in [ ] are optional, * indicates that the optional entry can be repeated many times. The first optional expression is
+		required if the * expression is used.
+	Components are listed as Key : Value pairs, where the Key must start at the first column of a new line.
+	The parser will ignore any lines that do not begin with a Key and are not part of a braced expression.
+	If DefaultState is omitted, the default state is 0.
+	If Colors is omitted, colors are chosen at random. The number of colors specified can be fewer than the number of states.
+		Any unspecified state colors will be chosen at random. Extra colors will be ignored.
+	It is probably a good idea to look at the provided definition files to get a better feel for the format.
+
+	NumStates : <uint num of states>
+	[DefaultState : <uint default state>]
+	Name : <Valid C# class name>
+	Neighborhood : {[(x,y)][ ; (x,y)]*}
+		That is, (x,y) pairs enclosed in curly braces and separated by semicolons
+	[Colors : {[#rrggbb][ , #rrggbb]*}]
+		That is, HTML style colors separated by commas enclosed in curly braces
+	Delta : {<next state method body, with the uint[] param named nb>}
+		That is, a method body including the curly braces for the following method
+		uint nextState(uint[] nb)
+
+CA State File Format:
+
+	There are two components of a CA State file. The definition syntax should be interpreted similarly to the CA Definition File Format.
+	Entering an (x,y) point outside of the size of the grid (500 x 500) has undefined behavior.
+
+	[DefaultState : <uint default state>]
+	[(<int x val>,<int y val>) : <uint state>]*
+
+Program Instructions:
+
+	Load the WpfApplication1 solution into VisualStudio.
+
+	Run the CAServer. Normally I detach this.
+	Run the ClientGUI.
+
+	There is a screencast available at:
+		http://wrowclif.public.iastate.edu/CA.mpeg
+		This shows the basic operations of the program.
+
+	Upon starting the application, the Current State should read UnInited.
+	Only two buttons should be enabled. They should both be under Current CA.
+	You can either load a CA from file, or create one.
+		Clicking Create will open a dialog where you can enter CA information.
+		The fields in this dialog can be filled in in much the same way as fields in the CA Definition File.
+		There are descriptions of what should be filled in for each of the entry boxes.
+		Click OK to attempt to load the CA.
+	If the CA fails to load, an error dialog will appear. You can load another CA using the same process described above.
+	If the CA successfully loads, the Grid State buttons will be enabled, as will Play and Step. Current State should be "Stopped".
+
+	While the CA is in the Stopped state, you can load or edit the grid state.
+	Grid State buttons:
+		Load - Opens a dialog that allows you to load a grid state from file
+		Save - Opens a dialog that allows you to save the current grid state to file
+		Clear - Opens a dialog that allows you to clear the entire grid to a valid state.
+	Editing the grid directly:
+		You can use the zoom slider or scroll your mouse over the bitmap to zoom in/out on the grid.
+			When using the mouse scroll zoom, the grid will attempt to zoom such that the point your mouse is under does not change
+			while you zoom.
+		Clicking on a point in the grid will cause it to toggle state. This will advance the point to the state one higher than its current state.
+			This toggle wraps around to zero after all states have been toggled through.
+	Changing Colors:
+		All states are listed in the States box. Next to each state is a color swatch showing what color is currently representing the state.
+		Clicking on this swatch will open a color chooser dialog. You can adjust the amounts of red, green, and blue to come up with a new color.
+		Upon clicking OK, the grid will be repainted to use the new color for the state. The States box should also be updated accordingly.
+
+	While in the Stopped state, the Play and Step buttons are enabled.
+		Step will step the simulation exactly one step.
+		Play will transition the simulation to the Running state.
+
+	While the CA is in the Running state, you cannot edit the grid.
+		Pause is the only button that is enabled. This will return the CA to the Stopped state.
+			The program is implemented such that, while the program is in the running state, the server steps the simulation
+			as quickly as possible, meaning that the client is not guaranteed to have the most current state of the grid.
+			Editing the simulation in this state would lead to corruption, so it is not allowed.
+			When the simulation is paused, the client is guaranteed to have the same version of the grid as the server.
+		You can still zoom the grid and move the scroll bars.
+		The color choosers will still appear, however, attempting to change a color will cause an error to be shown.
+			This will not hurt the CA. It is simply acknowledging that no action will be taken.
+
+Program Architecture Description:
+
+	The project is built on a client / server model. Several levels of redundancy are built into the program, as it is composed of
+	different pieces building on each other.
+
+	The most basic component is the CABoard. This encompasses the logic for stepping a simulation. It contains an instance of
+	ICASettings, which describes the behavior of the CA. No state bounds checking is done within this class.
+
+	The IController interface is what is published on WCF.
+
+	Controller is the server-side implementation. It utilizes an event loop to allow for the running state. A copy of the client's
+	current grid is cached along with a list of changes since the last update to the client's grid. Since multiple steps can occur,
+	a point that changed state will often transition back to the state the client last knew the client was in. These points don't need
+	to be sent over the network. Any time the client pulls changes, we check the changes against the cached client grid and send only the
+	points we need to. This significantly cuts down on the network traffic.
+
+	On the client side, ClientController connects to WCF.
+	The ClientController is wrapped by the ClientUI. The ClientUI uses another event loop to synchronize calls. It also tracks the state
+	of the grid and exposes several events that would be of interest to a UI for the CA. The load / save functionality is implemented here
+	using the CAParser. The ClientUI caches a version of the grid for purposes of saving state / allowing full repaints on color change.
+
+	The ClientGUI consists of a main window and 3 dialogs. The previous section described its use. The ClientGUI wraps a ClientUI and
+	connects to the events the ClientUI exposes. Most of the code for these classes is for displaying the GUI. All CA logic is done by
+	ClientUI.
+
+	And yes, I spelled it Cellular Autamata. Consider it artistic license.
+
