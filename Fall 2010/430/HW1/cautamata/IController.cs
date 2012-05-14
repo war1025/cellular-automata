@@ -6,7 +6,7 @@ using System.ServiceModel;
 
 namespace CAServer {
 
-	[ServiceContract]
+	[ServiceContract( SessionMode = SessionMode.Required )]
 	public interface IController {
 
 		[OperationContract]
