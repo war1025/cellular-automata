@@ -1,0 +1,33 @@
+
+
+Name : Ant
+
+NumStates : 10
+
+Neighborhood : { (0,0) ; (0,-1) ; (0,1) ; (1,0) ; (-1,0) }
+
+Delta : {
+	uint val = nb[0];
+	if(1 <= val && val <= 4) {
+		return 5;
+	} else if(6 <= val && val <= 9) {
+		return 0;
+	}
+	val = nb[1];
+	if(val == 2 || val == 8) {
+		return nb[0] + 1;
+	}
+	val = nb[2];
+	if(val == 3 || val == 7) {
+		return nb[0] + 4;
+	}
+	val = nb[3];
+	if(val == 1 || val == 9) {
+		return nb[0] + 3;
+	}
+	val = nb[4];
+	if(val == 4 || val == 6) {
+		return nb[0] + 2;
+	}
+	return nb[0];
+}
