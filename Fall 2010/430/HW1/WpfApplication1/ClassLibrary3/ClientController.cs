@@ -8,12 +8,25 @@ using System.ServiceModel.Channels;
 
 namespace CAClient {
 
+	/**
+	 * The Client side implementation of IController.
+	 *
+	 * See IController for detailed method descriptions.
+	 **/
 	public class ClientController : ClientBase<IController>, IController {
 
+		/**
+		 * Creates a ClientController connecting to the given address
+		 *
+		 * @param address The address the Server is publishing the service to.
+		 **/
 		public ClientController(string address) : base(getBinding(), new EndpointAddress(address)) {
-			
+
 		}
 
+		/**
+		 * We use a NetTcpBinding with several of the parameters increased to allow for large data transfer
+		 **/
 		private static NetTcpBinding getBinding() {
 			var b = new NetTcpBinding();
 			b.MaxReceivedMessageSize = 10000000;
